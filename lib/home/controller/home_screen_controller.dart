@@ -4,59 +4,76 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import '../../env/app_env.dart';
-
 class HomeScreenController extends GetxController {
-  RxString apikey = "NA".obs;
+  /// Google Map Controller
+  GoogleMapController? googleMapController;
 
+  /// Loading state
   RxBool isLoading = true.obs;
+
+  /// Current device location
   Position? currentPosition;
-  Rx<LatLng> initialLatLng = LatLng(45.521563, -122.677433).obs;
+
+  /// Initial map position (default Chandigarh, India)
+  Rx<LatLng> initialLatLng = const LatLng(30.7333, 76.7794).obs;
+
+  /// Map markers
+  final Set<Marker> markers = {};
 
   @override
   Future<void> onInit() async {
     super.onInit();
     isLoading.value = true;
 
+    // Request or check location permission
     if (!await PermissionUtils.isLocationPermissionGranted()) {
       final result = await PermissionUtils.requestLocationPermission();
       if (result) {
-        _currentLocation();
+        _fetchCurrentLocation();
       }
     } else {
-      _currentLocation();
+      _fetchCurrentLocation();
     }
   }
 
-  void loadGoogleMapsApiKey() {
-    apikey.value = Env.googleMapApiKey;
-    Get.snackbar("title", "message");
+  /// Called when the map is created
+  void onMapCreated(GoogleMapController mapController) {
+    googleMapController = mapController;
   }
 
-  Future<void> _currentLocation() async {
+  /// Fetch current location and update map
+  Future<void> _fetchCurrentLocation() async {
     try {
       if (!await PermissionUtils.isLocationPermissionGranted()) return;
 
-      bool isServiceEnable = await Geolocator.isLocationServiceEnabled();
-      if (!isServiceEnable) {
-        debugPrint("HomeScreenController isLocationServiceEnabled is false ");
+      final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!isServiceEnabled) {
+        debugPrint("Location services are disabled.");
         return;
       }
 
       currentPosition = await Geolocator.getCurrentPosition(
-        locationSettings: LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
-      initialLatLng.value = LatLng(
-        currentPosition!.latitude,
-        currentPosition!.longitude,
-      );
-
-      isLoading.value = false;
+      // initialLatLng.value = LatLng(
+      //   currentPosition!.latitude,
+      //   currentPosition!.longitude,
+      // );
     } catch (error) {
-      debugPrint(
-        "HomeScreenController error in access user current location $error ",
+      debugPrint("Error accessing current location: $error");
+    } finally {
+      // Always add/update marker and stop loading
+      markers.add(
+        Marker(
+          markerId: const MarkerId('marker1'),
+          position: initialLatLng.value,
+          infoWindow: const InfoWindow(title: "Current Location"),
+        ),
       );
+      isLoading.value = false;
     }
   }
 }

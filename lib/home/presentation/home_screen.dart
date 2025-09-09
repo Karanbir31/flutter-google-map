@@ -8,39 +8,38 @@ class HomeScreen extends GetView<HomeScreenController> {
 
   @override
   Widget build(BuildContext context) {
-    controller.loadGoogleMapsApiKey();
-
     final theme = context.theme;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-
       appBar: AppBar(
-        title: Text("Home Screen"),
+        title: const Text("Home Screen"),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
       ),
-
       body: SafeArea(
         child: Obx(() {
           if (controller.isLoading.value) {
-            return Center(
+            return const Center(
               child: SizedBox(
                 width: 100,
                 height: 100,
-
                 child: CircularProgressIndicator(color: Colors.grey),
               ),
             );
-          } else {
-            return GoogleMap(
-              mapType: MapType.normal,
-              initialCameraPosition: CameraPosition(
-                target: controller.initialLatLng.value,
-                zoom: 10.0,
-              ),
-            );
           }
+
+          return GoogleMap(
+            onMapCreated: controller.onMapCreated,
+            markers: controller.markers,
+            mapType: MapType.normal,
+            initialCameraPosition: CameraPosition(
+              target: controller.initialLatLng.value,
+              zoom: 14.0,
+            ),
+            myLocationEnabled: true,
+            myLocationButtonEnabled: true,
+          );
         }),
       ),
     );
