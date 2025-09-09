@@ -19,12 +19,11 @@ class HomeScreen extends GetView<HomeScreenController> {
       ),
       body: SafeArea(
         child: Obx(() {
-          if (controller.isLoading.value) {
-            return const Center(
-              child: SizedBox(
-                width: 100,
-                height: 100,
-                child: CircularProgressIndicator(color: Colors.grey),
+          if (controller.isLocationPermissionDenied.value) {
+            return Center(
+              child: MaterialButton(
+                onPressed: controller.checkAndRequestLocationPermission,
+                child: const Text("Need location access"),
               ),
             );
           }
@@ -34,11 +33,19 @@ class HomeScreen extends GetView<HomeScreenController> {
             markers: controller.markers,
             mapType: MapType.normal,
             initialCameraPosition: CameraPosition(
-              target: controller.initialLatLng.value,
+              target: controller.locationLatLng,
               zoom: 14.0,
             ),
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
+
+            zoomGesturesEnabled: true,
+            tiltGesturesEnabled: true,
+            rotateGesturesEnabled: true,
+            scrollGesturesEnabled: true,
+            compassEnabled: true,
+
+            onTap: controller.updateLocationLatLng,
           );
         }),
       ),
